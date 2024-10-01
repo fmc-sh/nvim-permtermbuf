@@ -46,7 +46,7 @@ local function close_terminal(program)
 		handle_output(program)
 		vim.api.nvim_buf_delete(term.buf, { force = true }) -- Clean up the buffer
 		term.buf = nil
-		vim.cmd('echo "Closed and cleaned up ' .. program .. ' terminal"')
+		-- vim.cmd('echo "Closed and cleaned up ' .. program .. ' terminal"')
 	end
 end
 
