@@ -28,33 +28,35 @@ end
 -- Callback function to handle terminal output
 local function handle_output(program)
 	local buf = terminals[program].buf
-	local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-	-- Process lines and call the callback defined for the program
-	if terminals[program].callback then
-		terminals[program].callback(lines)
+	-- Only process output if the program exited, not if it was manually closed
+	if terminals[program].exited then
+		local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+		-- Process lines and call the callback defined for the program
+		if terminals[program].callback then
+			terminals[program].callback(lines)
+		end
 	end
 end
 
 -- Function to close terminal and handle cleanup
-local function close_terminal(program)
+local function close_terminal(program, program_exited)
 	local term = terminals[program]
 	if term.win and vim.api.nvim_win_is_valid(term.win) then
 		vim.api.nvim_win_close(term.win, true)
 		term.win = nil
 		restore_layout(program)
+
+		-- Set a flag if the terminal is closed due to the program exiting
+		term.exited = program_exited or false
+
 		-- Trigger callback for output processing before cleanup
 		handle_output(program)
-		--vim.api.nvim_buf_delete(term.buf, { force = true }) -- Clean up the buffer
-		--term.buf = nil
 
 		-- Use silent command to clean up the buffer
 		if term.buf and vim.api.nvim_buf_is_valid(term.buf) then
 			vim.cmd("silent! bdelete! " .. term.buf) -- Silent buffer deletion
 			term.buf = nil
 		end
-
-		-- use instead: vim.notify
-		-- vim.cmd('echo "Closed and cleaned up ' .. program .. ' terminal"')
 	end
 end
 
@@ -65,7 +67,8 @@ local function toggle_terminal(program)
 
 	-- If the terminal is already open, close it and cleanup
 	if term.win and vim.api.nvim_win_is_valid(term.win) then
-		close_terminal(program)
+		-- Close terminal manually, indicating the program didn't exit naturally
+		close_terminal(program, false)
 	else
 		-- Save the layout before opening a terminal
 		save_layout(program)
@@ -99,7 +102,8 @@ local function toggle_terminal(program)
 			vim.api.nvim_create_autocmd("TermClose", {
 				buffer = term_buf,
 				callback = function()
-					close_terminal(program)
+					-- Close terminal indicating the program exited
+					close_terminal(program, true)
 				end,
 			})
 		end
@@ -117,6 +121,7 @@ function M.setup(programs)
 			buf = nil,
 			previous_layout = nil,
 			callback = program.callback, -- Store callback for each program
+			exited = false, -- Flag to track if program exited
 		}
 
 		-- Create a toggle function for each program
