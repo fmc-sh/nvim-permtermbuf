@@ -25,17 +25,39 @@ local function restore_layout(program)
 	end
 end
 
+-- Callback function to handle terminal output
+local function handle_output(program)
+	local buf = terminals[program].buf
+	local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+	-- Process lines and call the callback defined for the program
+	if terminals[program].callback then
+		terminals[program].callback(lines)
+	end
+end
+
+-- Function to close terminal and handle cleanup
+local function close_terminal(program)
+	local term = terminals[program]
+	if term.win and vim.api.nvim_win_is_valid(term.win) then
+		vim.api.nvim_win_close(term.win, true)
+		term.win = nil
+		restore_layout(program)
+		-- Trigger callback for output processing before cleanup
+		handle_output(program)
+		vim.api.nvim_buf_delete(term.buf, { force = true }) -- Clean up the buffer
+		term.buf = nil
+		vim.cmd('echo "Closed and cleaned up ' .. program .. ' terminal"')
+	end
+end
+
 -- Generic function to toggle a terminal for any program
 local function toggle_terminal(program)
 	local term = terminals[program]
 	local term_buf = get_buf_by_name(term.buffer_name)
 
-	-- If the terminal is already open, close it and restore layout
+	-- If the terminal is already open, close it and cleanup
 	if term.win and vim.api.nvim_win_is_valid(term.win) then
-		vim.api.nvim_win_close(term.win, true)
-		restore_layout(program)
-		term.win = nil
-		vim.cmd('echo "Closed ' .. program .. ' terminal"') -- Debugging message
+		close_terminal(program)
 	else
 		-- Save the layout before opening a terminal
 		save_layout(program)
@@ -46,13 +68,13 @@ local function toggle_terminal(program)
 			vim.api.nvim_set_current_buf(term_buf)
 			term.win = vim.api.nvim_get_current_win()
 			vim.cmd("startinsert")
-			vim.cmd('echo "Opened existing ' .. program .. ' terminal"') -- Debugging message
+			vim.cmd('echo "Opened existing ' .. program .. ' terminal"')
 		else
 			-- Create new terminal buffer if it doesn't exist
 			term_buf = vim.api.nvim_create_buf(false, true)
 			vim.cmd("tabnew")
 			vim.api.nvim_set_current_buf(term_buf)
-			vim.cmd("terminal " .. term.cmd) -- Run the terminal command
+			vim.cmd("terminal " .. term.cmd)
 
 			-- Set buffer name and save window reference
 			vim.api.nvim_buf_set_name(term_buf, term.buffer_name)
@@ -63,7 +85,15 @@ local function toggle_terminal(program)
 
 			-- Enter insert mode
 			vim.cmd("startinsert")
-			vim.cmd('echo "Opened new ' .. program .. ' terminal"') -- Debugging message
+			vim.cmd('echo "Opened new ' .. program .. ' terminal"')
+
+			-- Attach autocmd to handle terminal exit
+			vim.api.nvim_create_autocmd("TermClose", {
+				buffer = term_buf,
+				callback = function()
+					close_terminal(program)
+				end,
+			})
 		end
 	end
 end
@@ -78,6 +108,7 @@ function M.setup(programs)
 			win = nil,
 			buf = nil,
 			previous_layout = nil,
+			callback = program.callback, -- Store callback for each program
 		}
 
 		-- Create a toggle function for each program
