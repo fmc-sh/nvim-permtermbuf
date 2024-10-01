@@ -49,13 +49,28 @@ local function close_terminal(program, program_exited)
 		-- Set a flag if the terminal is closed due to the program exiting
 		term.exited = program_exited or false
 
-		-- Trigger callback for output processing before cleanup
-		handle_output(program)
+		-- Only trigger callback if the program exited (not when toggled out)
+		if program_exited then
+			handle_output(program)
+		end
 
-		-- Use silent command to clean up the buffer
-		if term.buf and vim.api.nvim_buf_is_valid(term.buf) then
+		-- Only delete the buffer if the program has exited
+		if term.exited and term.buf and vim.api.nvim_buf_is_valid(term.buf) then
 			vim.cmd("silent! bdelete! " .. term.buf) -- Silent buffer deletion
 			term.buf = nil
+		end
+	end
+end
+
+-- Function to close any other program tabs except the current one
+local function close_other_program_tabs(current_program_name)
+	for program_name, term in pairs(terminals) do
+		-- Skip the current program
+		if program_name ~= current_program_name then
+			-- Close the terminal window if it's open
+			if term.win and vim.api.nvim_win_is_valid(term.win) then
+				close_terminal(program_name, false)
+			end
 		end
 	end
 end
@@ -64,6 +79,9 @@ end
 local function toggle_terminal(program)
 	local term = terminals[program]
 	local term_buf = get_buf_by_name(term.buffer_name)
+
+	-- Close any other open program tabs
+	close_other_program_tabs(program)
 
 	-- If the terminal is already open, close it and cleanup
 	if term.win and vim.api.nvim_win_is_valid(term.win) then
