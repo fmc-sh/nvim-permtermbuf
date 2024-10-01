@@ -44,14 +44,14 @@ local function close_terminal(program)
 		restore_layout(program)
 		-- Trigger callback for output processing before cleanup
 		handle_output(program)
-		--vim.api.nvim_buf_delete(term.buf, { force = true }) -- Clean up the buffer
-		--term.buf = nil
+		vim.api.nvim_buf_delete(term.buf, { force = true }) -- Clean up the buffer
+		term.buf = nil
 
-		-- Use silent command to clean up the buffer
-		if term.buf and vim.api.nvim_buf_is_valid(term.buf) then
-			vim.cmd("silent! bdelete! " .. term.buf) -- Silent buffer deletion
-			term.buf = nil
-		end
+		--		-- Use silent command to clean up the buffer
+		--		if term.buf and vim.api.nvim_buf_is_valid(term.buf) then
+		--			vim.cmd("silent! bdelete! " .. term.buf) -- Silent buffer deletion
+		--			term.buf = nil
+		--		end
 
 		-- use instead: vim.notify
 		-- vim.cmd('echo "Closed and cleaned up ' .. program .. ' terminal"')
