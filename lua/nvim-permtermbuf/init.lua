@@ -85,11 +85,6 @@ function M.setup(programs)
 		M[program.name].toggle = function()
 			toggle_terminal(program.name)
 		end
-
-		-- Optionally bind a command to toggle each terminal
-		vim.api.nvim_create_user_command(program.toggle_command, function()
-			M[program.name].toggle()
-		end, {})
 	end
 end
 
