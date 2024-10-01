@@ -1,6 +1,6 @@
 local M = {}
 
--- Store terminal buffers and windows for each program
+-- Store terminal buffers and windows for each program.
 local terminals = {}
 
 -- Utility function to check if a buffer with a given name exists
