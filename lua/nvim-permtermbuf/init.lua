@@ -91,6 +91,11 @@ local function toggle_terminal(program)
 		-- Save the layout before opening a terminal
 		save_layout(program)
 
+		-- NOTE: We do not start the program several times, only once then toggle showing the buffer
+		-- So having both first_toggle_cmd and cmd is redundant,
+		-- Remove it, or add logic to actually check if it is the first toggle or not
+		-- Program can exit for other reasons and that buffer cleared and we retoggle whereas it is not first toggle
+		-- TODO: Fix that
 		-- If buffer exists, reuse it
 		if term_buf then
 			vim.cmd("tabnew") -- Open a new tab (simulate full screen)
@@ -107,13 +112,24 @@ local function toggle_terminal(program)
 			vim.cmd("tabnew")
 			vim.api.nvim_set_current_buf(term_buf)
 
-			-- Check if first_toggle_cmd exists, and use it with %cwd% replacement
+			-- Check if first_toggle_cmd exists
 			if term.first_toggle_cmd then
-				local cwd = vim.fn.getcwd() -- Get current working directory
-				local toggle_cmd = term.first_toggle_cmd:gsub("%%cwd%%", cwd) -- Replace %cwd% with actual cwd
-				vim.cmd("terminal " .. toggle_cmd) -- Execute the modified first_toggle_cmd
+				local cmd = term.first_toggle_cmd
+
+				-- Check if first_cmd_callback exists and use it to modify toggle_cmd
+				if term.first_cmd_callback and type(term.first_toggle_cmd_callback) == "function" then
+					cmd = term.first_toggle_cmd_callback(cmd) -- Modify toggle_cmd with callback
+				end
+
+				vim.cmd("terminal " .. cmd) -- Execute the modified first_toggle_cmd
 			else
-				vim.cmd("terminal " .. term.cmd) -- Use the original term.cmd if no first_toggle_cmd
+				-- If no first_toggle_cmd, check if cmd_callback exists and modify term.cmd
+				local cmd = term.cmd
+				if term.cmd_callback and type(term.cmd_callback) == "function" then
+					cmd = term.cmd_callback(cmd) -- Modify cmd with callback
+				end
+
+				vim.cmd("terminal " .. cmd) -- Use the original or modified term.cmd
 			end
 
 			-- Set buffer name and save window reference
