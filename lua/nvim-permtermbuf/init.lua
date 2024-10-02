@@ -107,6 +107,10 @@ local function toggle_terminal(program)
 
 			-- Set buffer name and save window reference
 			vim.api.nvim_buf_set_name(term_buf, term.buffer_name)
+
+			-- Mark the buffer as unlisted using nvim_set_option_value
+			vim.api.nvim_set_option_value("buflisted", false, { buf = term_buf })
+
 			term.win = vim.api.nvim_get_current_win()
 
 			-- Store buffer and window
