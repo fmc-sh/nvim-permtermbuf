@@ -158,7 +158,7 @@ function M.setup(programs)
 			buf = nil,
 			previous_layout = nil,
 			callback_on_exit = program.callback_on_exit, -- Store callback for each program
-			callback_pre_exec = program.callback_pre_exec, -- Store callback for each program
+			callback_pre_exec_cmd = program.callback_pre_exec_cmd, -- Store callback for each program
 			exited = false, -- Flag to track if program exited
 		}
 
