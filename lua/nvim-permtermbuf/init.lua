@@ -109,11 +109,8 @@ local function toggle_terminal(program)
 			--
 			-- This is the first toggle, so we apply initial logic
 
-			term_buf = vim.api.nvim_create_buf(false, true)
-			vim.cmd("tabnew")
-			vim.api.nvim_set_current_buf(term_buf)
-
 			-- If no first_toggle_cmd, check if cmd_callback exists and modify term.cmd
+			-- First ensure we want to run the cmd
 			local cmd = term.cmd
 			if term.callback_pre_exec_cmd and type(term.callback_pre_exec_cmd) == "function" then
 				cmd = term.callback_pre_exec_cmd(cmd) -- Modify cmd with callback
@@ -121,7 +118,13 @@ local function toggle_terminal(program)
 			-- Nil is returned if the callback doesn't want the cmd to run, for ex, if a required factor isnt met
 			if cmd ~= nil then
 				vim.cmd("terminal " .. cmd)
+			else
+				return -- Exit function if cmd is nil
 			end
+
+			term_buf = vim.api.nvim_create_buf(false, true)
+			vim.cmd("tabnew")
+			vim.api.nvim_set_current_buf(term_buf)
 
 			-- Set buffer name and save window reference
 			vim.api.nvim_buf_set_name(term_buf, term.buffer_name)
