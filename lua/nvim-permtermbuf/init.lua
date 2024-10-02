@@ -112,25 +112,13 @@ local function toggle_terminal(program)
 			vim.cmd("tabnew")
 			vim.api.nvim_set_current_buf(term_buf)
 
-			-- Check if first_toggle_cmd exists
-			if term.first_toggle_cmd then
-				local cmd = term.first_toggle_cmd
-
-				-- Check if first_cmd_callback exists and use it to modify toggle_cmd
-				if term.first_cmd_callback and type(term.first_toggle_cmd_callback) == "function" then
-					cmd = term.first_toggle_cmd_callback(cmd) -- Modify toggle_cmd with callback
-				end
-
-				vim.cmd("terminal " .. cmd) -- Execute the modified first_toggle_cmd
-			else
-				-- If no first_toggle_cmd, check if cmd_callback exists and modify term.cmd
-				local cmd = term.cmd
-				if term.cmd_callback and type(term.cmd_callback) == "function" then
-					cmd = term.cmd_callback(cmd) -- Modify cmd with callback
-				end
-
-				vim.cmd("terminal " .. cmd) -- Use the original or modified term.cmd
+			-- If no first_toggle_cmd, check if cmd_callback exists and modify term.cmd
+			local cmd = term.cmd
+			if term.callback_pre_exec_cmd and type(term.callback_pre_exec_cmd) == "function" then
+				cmd = term.callback_pre_exec_cmd(cmd) -- Modify cmd with callback
 			end
+
+			vim.cmd("terminal " .. cmd)
 
 			-- Set buffer name and save window reference
 			vim.api.nvim_buf_set_name(term_buf, term.buffer_name)
@@ -150,7 +138,7 @@ local function toggle_terminal(program)
 			-- Attach autocmd to handle terminal exit
 			vim.api.nvim_create_autocmd("TermClose", {
 				buffer = term_buf,
-				callback = function()
+				callback_on_exit = function()
 					-- Close terminal indicating the program exited
 					close_terminal(program, true)
 				end,
