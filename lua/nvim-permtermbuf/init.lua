@@ -153,6 +153,12 @@ end
 
 -- Setup function to initialize the plugin with a list of programs
 function M.setup(programs)
+	-- Modify sessionoptions to remove 'terminal'
+	local sessionoptions = vim.opt.sessionoptions:get() -- Get the current sessionoptions
+	if vim.tbl_contains(sessionoptions, "terminal") then
+		vim.opt.sessionoptions:remove("terminal") -- Remove 'terminal' from sessionoptions
+	end
+
 	for _, program in pairs(programs) do
 		-- Initialize program state
 		terminals[program.name] = {
