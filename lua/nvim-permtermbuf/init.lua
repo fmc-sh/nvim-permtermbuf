@@ -32,8 +32,8 @@ local function handle_output(program)
 	if terminals[program].exited then
 		local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 		-- Process lines and call the callback defined for the program
-		if terminals[program].callback then
-			terminals[program].callback(lines)
+		if terminals[program].callback_on_exit then
+			terminals[program].callback_on_exit(lines)
 		end
 	end
 end
@@ -138,7 +138,7 @@ local function toggle_terminal(program)
 			-- Attach autocmd to handle terminal exit
 			vim.api.nvim_create_autocmd("TermClose", {
 				buffer = term_buf,
-				callback_on_exit = function()
+				callback = function()
 					-- Close terminal indicating the program exited
 					close_terminal(program, true)
 				end,
@@ -158,7 +158,7 @@ function M.setup(programs)
 			win = nil,
 			buf = nil,
 			previous_layout = nil,
-			callback = program.callback, -- Store callback for each program
+			callback_on_exit = program.callback_on_exit, -- Store callback for each program
 			exited = false, -- Flag to track if program exited
 		}
 
