@@ -100,10 +100,21 @@ local function toggle_terminal(program)
 			vim.cmd('echo "Opened existing ' .. program .. ' terminal"')
 		else
 			-- Create new terminal buffer if it doesn't exist
+			--
+			-- This is the first toggle, so we apply initial logic
+
 			term_buf = vim.api.nvim_create_buf(false, true)
 			vim.cmd("tabnew")
 			vim.api.nvim_set_current_buf(term_buf)
-			vim.cmd("terminal " .. term.cmd)
+
+			-- Check if first_toggle_cmd exists, and use it with %cwd% replacement
+			if term.first_toggle_cmd then
+				local cwd = vim.fn.getcwd() -- Get current working directory
+				local toggle_cmd = term.first_toggle_cmd:gsub("%%cwd%%", cwd) -- Replace %cwd% with actual cwd
+				vim.cmd("terminal " .. toggle_cmd) -- Execute the modified first_toggle_cmd
+			else
+				vim.cmd("terminal " .. term.cmd) -- Use the original term.cmd if no first_toggle_cmd
+			end
 
 			-- Set buffer name and save window reference
 			vim.api.nvim_buf_set_name(term_buf, term.buffer_name)
