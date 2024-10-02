@@ -88,6 +88,7 @@ local function toggle_terminal(program)
 		-- Close terminal manually, indicating the program didn't exit naturally
 		close_terminal(program, false)
 	else
+		-- Not open, so open it
 		-- Save the layout before opening a terminal
 		save_layout(program)
 
@@ -95,7 +96,7 @@ local function toggle_terminal(program)
 		-- So having both first_toggle_cmd and cmd is redundant,
 		-- Remove it, or add logic to actually check if it is the first toggle or not
 		-- Program can exit for other reasons and that buffer cleared and we retoggle whereas it is not first toggle
-		-- TODO: Fix that
+		-- TODO: Fix that... It has been fixed
 		-- If buffer exists, reuse it
 		if term_buf then
 			vim.cmd("tabnew") -- Open a new tab (simulate full screen)
