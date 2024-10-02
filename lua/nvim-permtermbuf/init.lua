@@ -154,11 +154,11 @@ function M.setup(programs)
 		terminals[program.name] = {
 			cmd = program.cmd,
 			buffer_name = program.buffer_name,
-			first_toggle_cmd = program.first_toggle_cmd,
 			win = nil,
 			buf = nil,
 			previous_layout = nil,
 			callback_on_exit = program.callback_on_exit, -- Store callback for each program
+			callback_pre_exec = program.callback_pre_exec, -- Store callback for each program
 			exited = false, -- Flag to track if program exited
 		}
 
