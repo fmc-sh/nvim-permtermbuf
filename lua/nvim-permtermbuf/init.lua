@@ -150,6 +150,7 @@ function M.setup(programs)
 		terminals[program.name] = {
 			cmd = program.cmd,
 			buffer_name = program.buffer_name,
+			first_toggle_cmd = program.first_toggle_cmd,
 			win = nil,
 			buf = nil,
 			previous_layout = nil,
