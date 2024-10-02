@@ -118,7 +118,8 @@ local function toggle_terminal(program)
 			if term.callback_pre_exec_cmd and type(term.callback_pre_exec_cmd) == "function" then
 				cmd = term.callback_pre_exec_cmd(cmd) -- Modify cmd with callback
 			end
-
+			-- Nil is returned if the callback doesn't want the cmd to run, for ex, if a required factor isnt met
+                        if cmd ~= nil then
 			vim.cmd("terminal " .. cmd)
 
 			-- Set buffer name and save window reference
